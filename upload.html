@@ -1,0 +1,90 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<head>
+	<title>上传测试</title>
+	<script type="text/javascript" src="jquery.js"></script>
+	<script  type="text/javascript">
+		var interval ;
+		function submitForm(){
+			if( $(":submit").prop("disabled") ){
+				return false;
+			}
+			var type= $("#type").val();
+			var uid = "";
+			 for (i = 0; i < 32; i++) {
+			  uid += Math.floor(Math.random() * 16).toString(16);
+			 }
+			 $("#uploadForm").attr("action","http://IP:8098/upload?X-Progress-ID="+uid+"&type="+type);
+			interval = setInterval(
+			   function () {
+				 showProgress(uid);
+			   },
+			   1000
+			 );
+
+			 $(":submit").prop("disabled",true);
+		}
+
+		function showProgress(uid){
+			$.ajax({
+				url:"http://IP:8098/progress?X-Progress-ID="+uid,
+				dataType:"json",
+				type:"Get"
+			}).done(function(result){
+				console.log(result);
+				if(result.state == "uploading"){
+					refreshProgressBar(result.received/result.size*100);
+				}else if(result.state == "done"){
+					refreshProgressBar(100);
+					clearInterval(interval);
+				}
+			});
+		}
+
+		function refreshProgressBar(percentage){
+			percentage = percentage.toFixed(0);
+			$(".percentage").css("width",percentage+"%");
+			$(".number").html(percentage+"%");
+		}
+
+
+	</script>
+
+	<style>
+		.progress-bar{
+			width:300px;
+			height:35px;
+			background:#F1F1F1;
+			display:inline-block;
+			position:relative;
+		}
+
+		.percentage{
+			display:inline-block;
+			height: 35px;
+			background: #91E791;
+		}
+
+		.number{
+			position: absolute;
+			left: 50%;
+			margin-top: 10px;
+			color: #2CA4F5;
+		}
+	</style>
+</head>
+<body>
+	<form id="uploadForm" method="POST" enctype="multipart/form-data" onsubmit="submitForm();">
+		<input type="text" id="type" value="receipt">
+		<input type="file" name="file">
+		</br>
+		<input type="submit" name="submit" value="upload">
+	</form>
+
+	<div class="progress-bar">
+		<span class="percentage"></span>
+		<span class="number"><span>
+	</div>
+</body>
+</html>
